@@ -35,7 +35,7 @@ echo -e "\033[1;32m            PAYLOAD + SSL |BY MORATECH "
 echo -e "\033[1;31m———————————————————————————————————————————————————\033[1;37m"
 echo -e "\033[1;36m               SCRIPT AUTOCONFIGURACION "
 echo -e "\033[1;31m———————————————————————————————————————————————————\033[1;37m"
-echo -e "\033[1;37mRequiere tener el puerto libre, 80, 443 y 444"
+echo -e "\033[1;37mRequiere tener el puerto 80, 443 y 444 libres"
 echo
 echo -e "\033[1;33m INSTALANDO SSL 443.. "
 inst_ssl_443 () {
@@ -52,9 +52,10 @@ inst_ssl_443 () {
     (echo br; echo br; echo uss; echo speed; echo pnl; echo killshito; echo @killshito.com)|openssl req -new -x509 -key key.pem -out cert.pem -days 1095 > /dev/null 2>&1
     cat key.pem cert.pem >> /etc/stunnel/stunnel.pem
     sed -i 's/ENABLED=0/ENABLED=1/g' /etc/default/stunnel4
-    service stunnel4 restart
-    service stunnel restart
-    service stunnel4 start
+    #Reiniciar el STUNNEL en 443, lo vamos a eliminar
+    #service stunnel4 restart
+    #service stunnel restart
+    #service stunnel4 start
 }
 
 fun_bar 'inst_ssl_443'
@@ -341,24 +342,40 @@ screen -dmS pythonwe python proxy.py -p 80&
 
 }
 fun_bar 'inst_py'
-iptables -I INPUT -p tcp --dport 80 -j ACCEPT
-iptables -I INPUT -p tcp --dport 443 -j ACCEPT
+
+#Eliminare los iptables para que se hagan abajo de ultimo
+#iptables -I INPUT -p tcp --dport 80 -j ACCEPT
+#iptables -I INPUT -p tcp --dport 443 -j ACCEPT
 
 echo -e "\033[1;33m INSTALANDO SSL 444.. "
 inst_ssl_444 () {
+
+   # Asegurarse de detener cualquier proceso relacionado antes de la configuración
+    pkill -f stunnel4
+    pkill -f stunnel
+    pkill -f 444
+    
     # Agregar configuración adicional para el puerto 444 al archivo stunnel.conf
     echo -e "  
     [NuevoStunnel]
     accept = 444
     connect = 127.0.0.1:22" >> /etc/stunnel/stunnel.conf
 
-    # Reiniciar el servicio para aplicar los cambios
-    service stunnel4 restart
-    service stunnel restart
-    service stunnel4 start
+    # Reiniciar el servicio para aplicar los cambios, esto para el 443 y el 444, elimine el restart del 443 arriba
+    #service stunnel4 restart
+    #service stunnel restart
+    #service stunnel4 start
 }
 
 fun_bar 'inst_ssl_444'
-iptables -I INPUT -p tcp --dport 444 -j ACCEPT
 
+# Reglas de iptables al final
+iptables -I INPUT -p tcp --dport 444 -j ACCEPT
+iptables -I INPUT -p tcp --dport 80 -j ACCEPT
+iptables -I INPUT -p tcp --dport 443 -j ACCEPT
 echo -e "ps x | grep 'pythonwe' | grep -v 'grep' || screen -dmS pythonwe python proxy.py -p 80" >> /etc/autostart
+
+# Reiniciar stunnel al final
+service stunnel4 restart
+service stunnel restart
+service stunnel4 start
