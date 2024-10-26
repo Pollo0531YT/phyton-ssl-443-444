@@ -52,10 +52,6 @@ inst_ssl_443 () {
     (echo br; echo br; echo uss; echo speed; echo pnl; echo killshito; echo @killshito.com)|openssl req -new -x509 -key key.pem -out cert.pem -days 1095 > /dev/null 2>&1
     cat key.pem cert.pem >> /etc/stunnel/stunnel.pem
     sed -i 's/ENABLED=0/ENABLED=1/g' /etc/default/stunnel4
-    #Reiniciar el STUNNEL en 443, lo vamos a eliminar
-    #service stunnel4 restart
-    #service stunnel restart
-    #service stunnel4 start
 }
 
 fun_bar 'inst_ssl_443'
@@ -360,11 +356,6 @@ inst_ssl_444 () {
     [NuevoStunnel]
     accept = 444
     connect = 127.0.0.1:22" >> /etc/stunnel/stunnel.conf
-
-    # Reiniciar el servicio para aplicar los cambios, esto para el 443 y el 444, elimine el restart del 443 arriba
-    #service stunnel4 restart
-    #service stunnel restart
-    #service stunnel4 start
 }
 
 fun_bar 'inst_ssl_444'
@@ -377,5 +368,3 @@ echo -e "ps x | grep 'pythonwe' | grep -v 'grep' || screen -dmS pythonwe python 
 
 # Reiniciar stunnel al final
 service stunnel4 restart
-service stunnel restart
-service stunnel4 start
