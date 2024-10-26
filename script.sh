@@ -31,7 +31,7 @@ fun_bar () {
 
 clear && clear
 echo -e "\033[1;31m———————————————————————————————————————————————————\033[1;37m"
-echo -e "\033[1;32m            PAYLOAD + SSL |BY MORATECH v0.1 "
+echo -e "\033[1;32m            PAYLOAD + SSL |BY MORATECH v0.0.1 "
 echo -e "\033[1;31m———————————————————————————————————————————————————\033[1;37m"
 echo -e "\033[1;36m               SCRIPT AUTOCONFIGURACION "
 echo -e "\033[1;31m———————————————————————————————————————————————————\033[1;37m"
@@ -46,7 +46,7 @@ inst_ssl_443 () {
     apt-get purge stunnel -y
     apt-get install stunnel4 -y
     apt-get install stunnel -y
-    pt=$(netstat -nplt |grep 'sshd' | awk -F ":" NR==1{'print $2'} | cut -d " " -f 1)
+    pt=$(netstat -nplt | grep 'sshd' | awk -F ":" NR==1{'print $2'} | cut -d " " -f 1)
     echo -e "cert = /etc/stunnel/stunnel.pem\nclient = no\nsocket = a:SO_REUSEADDR=1\nsocket = l:TCP_NODELAY=1\nsocket = r:TCP_NODELAY=1\n\n[stunnel]\nconnect = 127.0.0.1:${pt}\naccept = 443" > /etc/stunnel/stunnel.conf
     openssl genrsa -out key.pem 2048 > /dev/null 2>&1
     (echo br; echo br; echo uss; echo speed; echo pnl; echo killshito; echo @killshito.com)|openssl req -new -x509 -key key.pem -out cert.pem -days 1095 > /dev/null 2>&1
@@ -55,22 +55,28 @@ inst_ssl_443 () {
 }
 
 fun_bar 'inst_ssl_443'
+
 echo -e "\033[1;33m CONFIGURANDO PYTHON.. "
 inst_py () {
 
+    # Detener procesos relacionados con el puerto 80 y Python si están en ejecución
     pkill -f 80
     pkill python
+
+    # Instalar dependencias necesarias
     apt install python -y
     apt install screen -y
 
-    pt=$(netstat -nplt |grep 'sshd' | awk -F ":" NR==1{'print $2'} | cut -d " " -f 1)
+    # Obtener el puerto SSH activo
+    pt=$(netstat -nplt | grep 'sshd' | awk -F ":" NR==1{'print $2'} | cut -d " " -f 1)
 
+    # Crear el archivo proxy.py con la configuración correcta para el puerto 80
     cat <<EOF > proxy.py
 import socket, threading, thread, select, signal, sys, time, getopt
 
 # CONFIG
 LISTENING_ADDR = '0.0.0.0'
-LISTENING_PORT = 1080
+LISTENING_PORT = 80  # Puerto configurado para 80
 PASS = ''
 
 # CONST
@@ -284,11 +290,10 @@ class ConnectionHandler(threading.Thread):
             if error:
                 break
 
-
 def print_usage():
     print 'Usage: proxy.py -p <port>'
     print '       proxy.py -b <bindAddr> -p <port>'
-    print '       proxy.py -b 0.0.0.0 -p 1080'
+    print '       proxy.py -b 0.0.0.0 -p 80'
 
 def parse_args(argv):
     global LISTENING_ADDR
@@ -307,7 +312,6 @@ def parse_args(argv):
             LISTENING_ADDR = arg
         elif opt in ("-p", "--port"):
             LISTENING_PORT = int(arg)
-    
 
 def main(host=LISTENING_ADDR, port=LISTENING_PORT):
     
@@ -334,14 +338,11 @@ if __name__ == '__main__':
     main()
 EOF
 
-screen -dmS pythonwe python proxy.py -p 80&
-
+    # Ejecutar el script de Python en segundo plano usando `screen`
+    screen -dmS pythonwe python proxy.py -p 80
 }
-fun_bar 'inst_py'
 
-#Eliminare los iptables para que se hagan abajo de ultimo
-#iptables -I INPUT -p tcp --dport 80 -j ACCEPT
-#iptables -I INPUT -p tcp --dport 443 -j ACCEPT
+fun_bar 'inst_py'
 
 echo -e "\033[1;33m INSTALANDO SSL 444.. "
 inst_ssl_444 () {
@@ -364,7 +365,6 @@ fun_bar 'inst_ssl_444'
 iptables -I INPUT -p tcp --dport 444 -j ACCEPT
 iptables -I INPUT -p tcp --dport 80 -j ACCEPT
 iptables -I INPUT -p tcp --dport 443 -j ACCEPT
-echo -e "ps x | grep 'pythonwe' | grep -v 'grep' || screen -dmS pythonwe python proxy.py -p 80" >> /etc/autostart
 
 # Reiniciar stunnel al final
 service stunnel4 restart
