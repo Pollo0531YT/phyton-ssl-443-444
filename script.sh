@@ -31,54 +31,44 @@ fun_bar () {
 
 clear && clear
 echo -e "\033[1;31m———————————————————————————————————————————————————\033[1;37m"
-echo -e "\033[1;32m            PAYLOAD + SSL |BY KILLSHITO "
+echo -e "\033[1;32m            PAYLOAD + SSL |BY MORATECH "
 echo -e "\033[1;31m———————————————————————————————————————————————————\033[1;37m"
 echo -e "\033[1;36m               SCRIPT AUTOCONFIGURACION "
 echo -e "\033[1;31m———————————————————————————————————————————————————\033[1;37m"
-echo -e "\033[1;37mRequiere tener el puerto libre ,80 y el 443"
+echo -e "\033[1;37mRequiere tener el puerto libre, 80, 443 y 444"
 echo
-echo -e "\033[1;33m INSTALADO SSL.. "
-inst_ssl () {
-pkill -f stunnel4
-pkill -f stunnel
-pkill -f 443
-apt-get purge stunnel4 -y
-apt-get purge stunnel -y
-apt-get install stunnel4 -y
-apt-get install stunnel -y
-pt=$(netstat -nplt |grep 'sshd' | awk -F ":" NR==1{'print $2'} | cut -d " " -f 1)
-echo -e "cert = /etc/stunnel/stunnel.pem\nclient = no\nsocket = a:SO_REUSEADDR=1\nsocket = l:TCP_NODELAY=1\nsocket = r:TCP_NODELAY=1\n\n[stunnel]\nconnect = 127.0.0.1:${pt}\naccept = 443" > /etc/stunnel/stunnel.conf
-openssl genrsa -out key.pem 2048 > /dev/null 2>&1
-(echo br; echo br; echo uss; echo speed; echo pnl; echo killshito; echo @killshito.com)|openssl req -new -x509 -key key.pem -out cert.pem -days 1095 > /dev/null 2>&1
-cat key.pem cert.pem >> /etc/stunnel/stunnel.pem
-sed -i 's/ENABLED=0/ENABLED=1/g' /etc/default/stunnel4
-service stunnel4 restart
-service stunnel restart
-service stunnel4 start
-
-# Agregar configuración adicional al archivo stunnel.conf
-echo -e "  
-[NuevoStunnel]
-accept = 444
-connect = 127.0.0.1:22" >> /etc/stunnel/stunnel.conf
-
-# Reiniciar el servicio para aplicar los cambios
-service stunnel4 restart
-service stunnel restart
-service stunnel4 start
+echo -e "\033[1;33m INSTALANDO SSL 443.. "
+inst_ssl_443 () {
+    pkill -f stunnel4
+    pkill -f stunnel
+    pkill -f 443
+    apt-get purge stunnel4 -y
+    apt-get purge stunnel -y
+    apt-get install stunnel4 -y
+    apt-get install stunnel -y
+    pt=$(netstat -nplt |grep 'sshd' | awk -F ":" NR==1{'print $2'} | cut -d " " -f 1)
+    echo -e "cert = /etc/stunnel/stunnel.pem\nclient = no\nsocket = a:SO_REUSEADDR=1\nsocket = l:TCP_NODELAY=1\nsocket = r:TCP_NODELAY=1\n\n[stunnel]\nconnect = 127.0.0.1:${pt}\naccept = 443" > /etc/stunnel/stunnel.conf
+    openssl genrsa -out key.pem 2048 > /dev/null 2>&1
+    (echo br; echo br; echo uss; echo speed; echo pnl; echo killshito; echo @killshito.com)|openssl req -new -x509 -key key.pem -out cert.pem -days 1095 > /dev/null 2>&1
+    cat key.pem cert.pem >> /etc/stunnel/stunnel.pem
+    sed -i 's/ENABLED=0/ENABLED=1/g' /etc/default/stunnel4
+    service stunnel4 restart
+    service stunnel restart
+    service stunnel4 start
 }
-fun_bar 'inst_ssl'
+
+fun_bar 'inst_ssl_443'
 echo -e "\033[1;33m CONFIGURANDO PYTHON.. "
 inst_py () {
 
-pkill -f 80
-pkill python
-apt install python -y
-apt install screen -y
+    pkill -f 80
+    pkill python
+    apt install python -y
+    apt install screen -y
 
-pt=$(netstat -nplt |grep 'sshd' | awk -F ":" NR==1{'print $2'} | cut -d " " -f 1)
+    pt=$(netstat -nplt |grep 'sshd' | awk -F ":" NR==1{'print $2'} | cut -d " " -f 1)
 
- cat <<EOF > proxy.py
+    cat <<EOF > proxy.py
 import socket, threading, thread, select, signal, sys, time, getopt
 
 # CONFIG
@@ -99,8 +89,8 @@ class Server(threading.Thread):
         self.host = host
         self.port = port
         self.threads = []
-    self.threadsLock = threading.Lock()
-    self.logLock = threading.Lock()
+        self.threadsLock = threading.Lock()
+        self.logLock = threading.Lock()
 
     def run(self):
         self.soc = socket.socket(socket.AF_INET)
@@ -155,7 +145,6 @@ class Server(threading.Thread):
                 c.close()
         finally:
             self.threadsLock.release()
-            
 
 class ConnectionHandler(threading.Thread):
     def __init__(self, socClient, server, addr):
@@ -276,20 +265,20 @@ class ConnectionHandler(threading.Thread):
                 error = True
             if recv:
                 for in_ in recv:
-                try:
+                    try:
                         data = in_.recv(BUFLEN)
                         if data:
-                if in_ is self.target:
-                self.client.send(data)
+                            if in_ is self.target:
+                                self.client.send(data)
                             else:
                                 while data:
                                     byte = self.target.send(data)
                                     data = data[byte:]
 
                             count = 0
-            else:
-                break
-            except:
+                        else:
+                            break
+                    except:
                         error = True
                         break
             if count == TIMEOUT:
@@ -355,21 +344,21 @@ fun_bar 'inst_py'
 iptables -I INPUT -p tcp --dport 80 -j ACCEPT
 iptables -I INPUT -p tcp --dport 443 -j ACCEPT
 
-echo -e "ps x | grep 'pythonwe' | grep -v 'grep' || screen -dmS pythonwe python proxy.py -p 80" >> /etc/autostart
+echo -e "\033[1;33m INSTALANDO SSL 444.. "
+inst_ssl_444 () {
+    # Agregar configuración adicional para el puerto 444 al archivo stunnel.conf
+    echo -e "  
+    [NuevoStunnel]
+    accept = 444
+    connect = 127.0.0.1:22" >> /etc/stunnel/stunnel.conf
 
-echo
-echo -e " \033[1;37m  AHORA HAGA LO SIGUENTE "
-echo -e " \033[1;37mPARA CREAR UN USUARIO ESCRIBA :CREARUSER "
-echo -e " \033[1;37mPARA REMOVE UN USUARIO ESCRIBA :REMOUSER "
-echo
-echo
-echo '
-echo
-read -p "Usuario :" name
-read -p "Contraseña :" pass
-useradd -M -s /bin/false $name
-(echo $pass; echo $pass)|passwd $name 2>/dev/null' > /bin/CREARUSER &&chmod +x /bin/CREARUSER
-echo '
-echo
-read -p "Escriba su usuario que desa remover :" user
-userdel -f $us' >/bin/REMOUSER &&chmod +x /bin/REMOUSER
+    # Reiniciar el servicio para aplicar los cambios
+    service stunnel4 restart
+    service stunnel restart
+    service stunnel4 start
+}
+
+fun_bar 'inst_ssl_444'
+iptables -I INPUT -p tcp --dport 444 -j ACCEPT
+
+echo -e "ps x | grep 'pythonwe' | grep -v 'grep' || screen -dmS pythonwe python proxy.py -p 80" >> /etc/autostart
