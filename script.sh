@@ -31,11 +31,11 @@ fun_bar () {
 
 clear && clear
 echo -e "\033[1;31m———————————————————————————————————————————————————\033[1;37m"
-echo -e "\033[1;32m            PAYLOAD + SSL |BY MORATECH v0.0.3 "
+echo -e "\033[1;32m            PAYLOAD + SSL |BY MORATECH v0.0.4 "
 echo -e "\033[1;31m———————————————————————————————————————————————————\033[1;37m"
 echo -e "\033[1;36m               SCRIPT AUTOCONFIGURACION "
 echo -e "\033[1;31m———————————————————————————————————————————————————\033[1;37m"
-echo -e "\033[1;37mRequiere tener el puerto libre ,80 y el 443"
+echo -e "\033[1;37mRequiere tener el puerto 80,443 y 444 libre"
 echo
 echo -e "\033[1;33m INSTALANDO SSL 443.. "
 inst_ssl_443 () {
@@ -361,6 +361,6 @@ iptables -I INPUT -p tcp --dport 443 -j ACCEPT
 iptables -I INPUT -p tcp --dport 444 -j ACCEPT
 
 # Reiniciar stunnel al final
-service stunnel4 restart
-service stunnel restart
-service stunnel4 start
+#service stunnel4 restart
+#service stunnel restart
+#service stunnel4 start
