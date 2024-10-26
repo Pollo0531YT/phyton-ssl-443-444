@@ -31,7 +31,7 @@ fun_bar () {
 
 clear && clear
 echo -e "\033[1;31m———————————————————————————————————————————————————\033[1;37m"
-echo -e "\033[1;32m            PAYLOAD + SSL |BY MORATECH v0.0.1 "
+echo -e "\033[1;32m            PAYLOAD + SSL |BY MORATECH v0.0.2"
 echo -e "\033[1;31m———————————————————————————————————————————————————\033[1;37m"
 echo -e "\033[1;36m               SCRIPT AUTOCONFIGURACION "
 echo -e "\033[1;31m———————————————————————————————————————————————————\033[1;37m"
@@ -52,6 +52,9 @@ inst_ssl_443 () {
     (echo br; echo br; echo uss; echo speed; echo pnl; echo killshito; echo @killshito.com)|openssl req -new -x509 -key key.pem -out cert.pem -days 1095 > /dev/null 2>&1
     cat key.pem cert.pem >> /etc/stunnel/stunnel.pem
     sed -i 's/ENABLED=0/ENABLED=1/g' /etc/default/stunnel4
+    service stunnel4 restart
+    service stunnel restart
+    service stunnel4 start
 }
 
 fun_bar 'inst_ssl_443'
@@ -59,24 +62,19 @@ fun_bar 'inst_ssl_443'
 echo -e "\033[1;33m CONFIGURANDO PYTHON.. "
 inst_py () {
 
-    # Detener procesos relacionados con el puerto 80 y Python si están en ejecución
     pkill -f 80
     pkill python
-
-    # Instalar dependencias necesarias
     apt install python -y
     apt install screen -y
 
-    # Obtener el puerto SSH activo
     pt=$(netstat -nplt | grep 'sshd' | awk -F ":" NR==1{'print $2'} | cut -d " " -f 1)
 
-    # Crear el archivo proxy.py con la configuración correcta para el puerto 80
     cat <<EOF > proxy.py
 import socket, threading, thread, select, signal, sys, time, getopt
 
 # CONFIG
 LISTENING_ADDR = '0.0.0.0'
-LISTENING_PORT = 80  # Puerto configurado para 80
+LISTENING_PORT = 80
 PASS = ''
 
 # CONST
@@ -338,21 +336,17 @@ if __name__ == '__main__':
     main()
 EOF
 
-    # Ejecutar el script de Python en segundo plano usando `screen`
-    screen -dmS pythonwe python proxy.py -p 80
+    screen -dmS pythonwe python proxy.py -p 80&
 }
 
 fun_bar 'inst_py'
 
 echo -e "\033[1;33m INSTALANDO SSL 444.. "
 inst_ssl_444 () {
-
-   # Asegurarse de detener cualquier proceso relacionado antes de la configuración
     pkill -f stunnel4
     pkill -f stunnel
     pkill -f 444
     
-    # Agregar configuración adicional para el puerto 444 al archivo stunnel.conf
     echo -e "  
     [NuevoStunnel]
     accept = 444
@@ -362,9 +356,11 @@ inst_ssl_444 () {
 fun_bar 'inst_ssl_444'
 
 # Reglas de iptables al final
-iptables -I INPUT -p tcp --dport 444 -j ACCEPT
 iptables -I INPUT -p tcp --dport 80 -j ACCEPT
 iptables -I INPUT -p tcp --dport 443 -j ACCEPT
+iptables -I INPUT -p tcp --dport 444 -j ACCEPT
 
 # Reiniciar stunnel al final
 service stunnel4 restart
+service stunnel restart
+service stunnel4 start
